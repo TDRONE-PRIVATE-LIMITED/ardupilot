@@ -1,0 +1,39 @@
+# hw definition file for the TDRONE power_board FMU bootloader (U12, STM32H743VIH6)
+
+MCU STM32H7xx STM32H743xx
+
+# development ID, not registered with ArduPilot yet
+APJ_BOARD_ID 7005
+
+OSCILLATOR_HZ 25000000
+
+FLASH_SIZE_KB 2048
+
+# the bootloader is at the start of flash
+FLASH_RESERVE_START_KB 0
+
+# the firmware starts 128k in
+FLASH_BOOTLOADER_LOAD_KB 128
+
+# USB to the compute board, USART1 to the BMS (IC1, 'fmu' bridge)
+SERIAL_ORDER OTG1 USART1
+
+PA11 OTG_FS_DM OTG1
+PA12 OTG_FS_DP OTG1
+
+PA9  USART1_TX USART1
+PA10 USART1_RX USART1
+
+# keep the ESCs in normal boot while the FMU bootloader runs
+PE7  ESC1_BOOT0 OUTPUT LOW
+PE9  ESC2_BOOT0 OUTPUT LOW
+PE11 ESC3_BOOT0 OUTPUT LOW
+PE13 ESC4_BOOT0 OUTPUT LOW
+
+define CH_CFG_USE_MEMCORE 1
+define CH_CFG_USE_HEAP 1
+define CH_CFG_USE_SEMAPHORES 0
+define CH_CFG_USE_MUTEXES 1
+define CH_CFG_USE_DYNAMIC 1
+define CH_CFG_USE_WAITEXIT 1
+define CH_CFG_USE_REGISTRY 1

@@ -1,0 +1,28 @@
+# TDrone-H1 board defaults. Battery data comes from the power_board BMS (U575) over SERIAL4,
+# decoded by scripts/bms_battery.lua (ROMFS).
+
+# scripting battery backend
+SCR_ENABLE 1
+BATT_MONITOR 29
+BATT_CAPACITY 10000
+
+# pack 4S2P Samsung INR21700-50S: low 3.50 V/cell -> RTL, critical 3.30 V/cell -> Land
+BATT_LOW_VOLT 14.0
+BATT_CRT_VOLT 13.2
+BATT_FS_LOW_ACT 2
+BATT_FS_CRT_ACT 1
+BATT_FS_VOLTSRC 1
+
+# SERIAL4 is MAV3 (MAV1 = SERIAL0 USB, MAV2 = SERIAL2 radio): private link to the BMS, so its
+# messages are not forwarded to the GCS, and no telemetry streams to it (heartbeat only)
+MAV3_OPTIONS 2
+MAV3_RAW_SENS 0
+MAV3_EXT_STAT 0
+MAV3_RC_CHAN 0
+MAV3_RAW_CTRL 0
+MAV3_POSITION 0
+MAV3_EXTRA1 0
+MAV3_EXTRA2 0
+MAV3_EXTRA3 0
+MAV3_PARAMS 0
+MAV3_ADSB 0

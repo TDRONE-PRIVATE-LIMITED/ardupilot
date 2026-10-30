@@ -100,6 +100,7 @@ public:
         OPTION_MAVLINK_NO_FORWARD_old = (1U<<10), // // moved to GCS_MAVLINK::Option
         OPTION_NOFIFO             = (1U<<11), // disable hardware FIFO
         OPTION_NOSTREAMOVERRIDE_old   = (1U<<12), // moved to GCS_MAVLINK::Option
+        OPTION_PARITY_EVEN        = (1U<<13), // 8E1, e.g. an STM32 ROM bootloader behind SERIAL_PASS2
     };
 
     bool option_is_set(Option option) const {

@@ -30,7 +30,7 @@ class ChibiOSHWDef(hwdef.HWDef):
     # output variables for each pin
     f4f7_vtypes = ['MODER', 'OTYPER', 'OSPEEDR', 'PUPDR', 'ODR', 'AFRL', 'AFRH']
     f1_vtypes = ['CRL', 'CRH', 'ODR']
-    af_labels = ['USART', 'UART', 'SPI', 'I2C', 'SDIO', 'SDMMC', 'OTG', 'JT', 'TIM', 'CAN', 'QUADSPI', 'OCTOSPI', 'ETH', 'MCO']
+    af_labels = ['USART', 'UART', 'LPUART', 'SPI', 'I2C', 'SDIO', 'SDMMC', 'OTG', 'JT', 'TIM', 'CAN', 'QUADSPI', 'OCTOSPI', 'ETH', 'MCO']
 
     def __init__(self, bootloader=False, signed_fw=False, default_params_filepath=None, **kwargs):
         super(ChibiOSHWDef, self).__init__(**kwargs)
@@ -263,7 +263,7 @@ class ChibiOSHWDef(hwdef.HWDef):
                 self.f1_pin_setup(mcu_type)
 
             # check that labels and pin types are consistent
-            for prefix in ['USART', 'UART', 'TIM']:
+            for prefix in ['USART', 'UART', 'LPUART', 'TIM']:
                 if label is None or type is None:
                     continue
                 if type.startswith(prefix):
@@ -392,7 +392,8 @@ class ChibiOSHWDef(hwdef.HWDef):
                 v = "PULLUP"
             # generate pullups for UARTs
             if (self.type.startswith('USART') or
-                self.type.startswith('UART')) and (
+                self.type.startswith('UART') or
+                self.type.startswith('LPUART')) and (
                 (self.label.endswith('_TX') or
                  self.label.endswith('_RX') or
                  self.label.endswith('_CTS'))):
@@ -589,8 +590,10 @@ class ChibiOSHWDef(hwdef.HWDef):
             patterns = {
                 'USART*RX' : 'PERIPH_TYPE::UART_RX',
                 'UART*RX' : 'PERIPH_TYPE::UART_RX',
+                'LPUART*RX' : 'PERIPH_TYPE::UART_RX',
                 'USART*TX' : 'PERIPH_TYPE::UART_TX',
                 'UART*TX' : 'PERIPH_TYPE::UART_TX',
+                'LPUART*TX' : 'PERIPH_TYPE::UART_TX',
                 'I2C*SDA' : 'PERIPH_TYPE::I2C_SDA',
                 'I2C*SCL' : 'PERIPH_TYPE::I2C_SCL',
                 'EXTERN_GPIO*' : 'PERIPH_TYPE::GPIO',
@@ -1776,6 +1779,11 @@ INCLUDE common.ld
                 n = int(dev[4:])
             elif dev.startswith('USART'):
                 n = int(dev[5:])
+            elif dev.startswith('LPUART'):
+                # LPUART runs interrupt-driven (no DMA)
+                n = int(dev[6:])
+                f.write('#define STM32_%s_RX_DMA_CONFIG false, 0, 0\n' % dev)
+                f.write('#define STM32_%s_TX_DMA_CONFIG false, 0, 0\n' % dev)
             elif dev.startswith('OTG'):
                 n = int(dev[3:])
             elif dev.startswith('EMPTY'):
@@ -1814,8 +1822,8 @@ INCLUDE common.ld
             else:
                 need_uart_driver = True
                 f.write(
-                    "#define HAL_%s_CONFIG { (BaseSequentialStream*) &SD%u, %u, false, "
-                    % (dev, n, n))
+                    "#define HAL_%s_CONFIG { (BaseSequentialStream*) &%s%u, %u, false, "
+                    % (dev, 'LPSD' if dev.startswith('LPUART') else 'SD', n, n))
                 if self.mcu_series.startswith("STM32F1"):
                     f.write("%s, %s, %s, %s, " % (tx_line, rx_line, rts_line, cts_line))
                 else:
@@ -2396,7 +2404,7 @@ Please run: Tools/scripts/build_bootloaders.py %s
         '''write peripheral enable lines'''
         f.write('// peripherals enabled\n')
         for type in sorted(list(self.bytype.keys()) + list(self.alttype.keys())):
-            if type.startswith('USART') or type.startswith('UART'):
+            if type.startswith('USART') or type.startswith('UART') or type.startswith('LPUART'):
                 dstr = 'STM32_SERIAL_USE_%-6s' % type
                 f.write('#ifndef %s\n' % dstr)
                 f.write('#define %s TRUE\n' % dstr)
@@ -2788,7 +2796,7 @@ Please run: Tools/scripts/build_bootloaders.py %s
     def valid_type(self, ptype, label):
         '''check type of a pin line is valid'''
         patterns = [
-            r'INPUT', r'OUTPUT', r'TIM\d+', r'USART\d+', r'UART\d+', r'ADC\d+',
+            r'INPUT', r'OUTPUT', r'TIM\d+', r'USART\d+', r'UART\d+', r'LPUART\d+', r'ADC\d+',
             r'SPI\d+', r'OTG\d+', r'SWD', r'CAN\d?', r'I2C\d+', r'CS',
             r'SDMMC\d+', r'SDIO', r'QUADSPI\d', r'OCTOSPI\d', r'ETH\d', r'RCC',
         ]

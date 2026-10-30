@@ -469,6 +469,16 @@ void UARTDriver::_begin(uint32_t b, uint16_t rxS, uint16_t txS)
             if (!(sercfg.cr2 & USART_CR2_STOP2_BITS)) {
                 sercfg.cr2 |= USART_CR2_STOP1_BITS;
             }
+            if (_last_options & OPTION_PARITY_EVEN) {
+                // even parity from SERIALn_OPTIONS survives begin() (see configure_parity())
+#ifdef USART_CR1_M0
+                sercfg.cr1 |= USART_CR1_M0 | USART_CR1_PCE;
+#else
+                sercfg.cr1 |= USART_CR1_M | USART_CR1_PCE;
+#endif
+                sercfg.cr1 &= ~USART_CR1_PS;
+                parity = 2;
+            }
             sercfg.ctx = (void*)this;
 
             sdStart((SerialDriver*)sdef.serial, &sercfg);
